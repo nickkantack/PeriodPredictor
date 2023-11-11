@@ -47,7 +47,7 @@
                 height: 100%;
             }
             .periodProbability {
-                display: block;
+                display: none;
                 position: relative;
                 width: 100%;
                 text-align: center;
@@ -159,9 +159,6 @@
                             });
                             cell.appendChild(daySquare);
                             daySquare.querySelector(".dayNumber").innerHTML = `${workingDate.getDate()}`;
-                            // TODO skip setting the probability below and have this method call a 
-                            // method at the end that updates probabilities
-                            daySquare.querySelector(".periodProbability").innerHTML = `4%`;
                             if (workingDate.getMonth() !== showingMonth) cell.classList.add("outOfFocusMonth");
                             workingDate = new Date(workingDate.getTime() + 24 * 3600000);
                         }
@@ -172,27 +169,71 @@
             function updatePeriodProbabilities() {
                 // TODO loop through all shown day cells and compute the probability of a period
                     // if the date is before today, don't show the probability at all
-                if (datesOfPastPeriods.length === 0) return;
+                if (datesOfPastPeriods.length === 0) {
+                    for (let i = 1; i < 7; i++) {
+                        for (let j = 0; j < 7; j++) {
+                            document.getElementById(`cell-${i}-${j}`).querySelector(".periodProbability").style.display = "none";
+                        }
+                    }
+                    return;
+                }
+                
                 const dateOfLastPeriod = centerTimeOfThisDate(datesOfPastPeriods[datesOfPastPeriods.length - 1]);
 
                 console.log(`Last period started ${Math.round((centerTimeOfThisDate(new Date(Date.now())).getTime() - dateOfLastPeriod.getTime()) / (24 * 3600 * 1000))} days ago`);
+                
+                const epsilon = 2;
+                let mu = 28;
+                let sigma = 3;
+                // TODO if there are enough periods, update mu and sigma
 
                 for (let i = 1; i < 7; i++) {
                     for (let j = 0; j < 7; j++) {
                         const thisDate = cellToDateMap[`cell-${i}-${j}`];
+                        const daySquare = document.getElementById(`cell-${i}-${j}`);
                         const daysSinceLastPeriod = daysFromCenteredDayAToB(dateOfLastPeriod, thisDate);
-                        console.log(`${thisDate} is ${daysSinceLastPeriod} days from last period`);
+                        if (daysSinceLastPeriod < 0) {
+                            daySquare.querySelector(".periodProbability").style.display = "none";
+                            continue;
+                        } else {
+                            daySquare.querySelector(".periodProbability").style.display = "block";
+                            // TODO calculate the period probability
+                            const probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
+                            const percentProbability = parseInt(probability * 100);
+                            if (percentProbability > 0) daySquare.querySelector(".periodProbability").innerHTML = `${percentProbability}%`;
+                        }
                     }
                 }
-
-                // TODO sort the past periods
-                // TODO get mean and standard deviation from the past periods
-                // TODO 
             }
 
             function getProbabilityOfPeriodStartingOnDayN(N, mu, sigma, epsilon) {
+                const zt = Math.min(N, Math.ceil(epsilon * N / mu));
+                const zb = Math.max(1, Math.floor(N / mu / epsilon));
+                console.log(`zb: ${zb}, zt: ${zt}`);
 
+                let totalProbability = 0;
+                for (let z = zb; z <= zt; z++) {
+                    for (let j = z - 1; j <= N - 1; j++) {
+                        console.log(`z: ${z}, j: ${j}, N: ${N}, totalProb: ${totalProbability}`);
+                        if (z === 1) {
+                            totalProbability += getProbabilityOfKthPeriodStartingOnDayN(N, 1, mu, sigma);
+                            break;
+                        } else {
+                            totalProbability += getProbabilityOfKthPeriodStartingOnDayN(j, z - 1, mu, sigma) * 
+                                                getProbabilityOfKthPeriodStartingOnDayN(N - j, 1, mu, sigma);
+                        }
+                    }
+                }
+                return totalProbability;
             }
+
+            function getProbabilityOfKthPeriodStartingOnDayN(N, k, mu, sigma) {
+                const localMean = k * mu;
+                const localStdDev = Math.sqrt(k) * sigma;
+                return 1 / Math.sqrt(2 * localStdDev) * Math.exp(-Math.pow(N - localMean, 2) / 2 / Math.pow(localStdDev, 2));
+            }
+
+            console.log(getProbabilityOfPeriodStartingOnDayN(25, 30, 3, 2));
 
             function centerTimeOfThisDate(date) {
                 return new Date(date.getTime() - 3600 * 1000 * date.getHours() - 60 * 1000 * date.getMinutes() - 1000 * date.getSeconds() + 12 * 3600 * 1000);

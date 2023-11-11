@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Period Tracker</title>
+        <style>
+            .fullWidthDiv {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .dayHeading {
+                text-align: center;
+                background: #888;
+            }
+            .dayNumber {
+                display: block;
+            }
+            .daySquareTd {
+                width: 13vw;
+                height: 6vh;
+                font-size: 3vh;
+                background: #DDD;
+                box-sizing: border-box;
+            }
+            .daySquareTemplateContents {
+                position: relative;
+                margin: 0;
+                width: 13vw;
+                height: 5vh;
+                box-sizing: border-box;
+            }
+            .outOfFocusMonth {
+                color: #666;
+            }
+            .periodMarker {
+                display: block;
+                position: absolute;
+                top: 0%;
+                left: 100%;
+                width: 3vw;
+                height: 3vw;
+                transform: translate(-100%, 0%);
+            }
+            .periodMarker svg {
+                width: 100%;
+                height: 100%;
+            }
+            .periodProbability {
+                display: block;
+                position: relative;
+                width: 100%;
+                text-align: center;
+                font-size: 2vh;
+            }
+            #monthLabel {
+                width: 100%;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="controlsDiv" class="fullWidthDiv">
+            <button id="back">back</button>
+            <button id="forward">forward</button>
+        </div>
+        <div id="monthLabel"></div>
+        <div id="calendarDiv" class="fullWidthDiv">
+            <div id="shownMonthDiv">
+                <table id="shownMonthTable"></table>
+            </div>
+            <div id="nextMonthDiv">
+
+            </div>
+        </div>
+        <template id="daySquareTemplate">
+            <div class="daySquareTemplateContents">
+                <svg class="periodMarker" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" stroke="#444" stroke-width="1vw" fill="none"></circle>
+                </svg>
+                <div class="dayNumber"></div>
+                <div class="periodProbability"></div>
+            </div>
+        </template>
+        <script>
+
+            const daysOfWeekShortNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            let showingMonth = 0;
+            let showingYear = 2023;
+
+            let dayIndexOfTopLeftSunday = 0;
+
+            const cellToDateMap = {};
+
+            const datesOfPastPeriods = [];
+
+            const currentDate = new Date();
+            showingMonth = currentDate.getMonth();
+            const sundayDate = new Date(currentDate.getTime() - 24 * 3600000 * currentDate.getDate());
+            // Find the Sunday before the first of the current month, or use the first of the current month if it is a Sunday
+            // Pass in the date object of the Sunday found in the previous step to populateMonthTables
+            populateMonthTables(sundayDate);
+
+            back.addEventListener("click", () => {
+                changeMonth(false);
+            });
+
+            forward.addEventListener("click", () => {
+                changeMonth(true);
+            });
+
+            function changeMonth(goForward) {
+                const upperLeftCornerDate = cellToDateMap["cell-1-0"];
+                const dayInTheMiddleOfPreviousMonth = new Date(upperLeftCornerDate.getTime() + (goForward ? 6 : -2) * 168 * 3600000);
+                const firstOfTheMonth = new Date(dayInTheMiddleOfPreviousMonth.getTime() - 24 * 3600000 * (dayInTheMiddleOfPreviousMonth.getDate() - 1));
+                showingMonth = firstOfTheMonth.getMonth();
+                showingYear = firstOfTheMonth.getFullYear();
+                const sundayDate = new Date(firstOfTheMonth.getTime() - 24 * 3600000 * firstOfTheMonth.getDay());
+                populateMonthTables(sundayDate);
+            }
+
+            function populateMonthTables(topLeftDate) {
+                // The date object passed in is the Sunday before the first of this month, or possible the first of this month if it is a Sunday
+                // Create a rolling date object as you make cells below. Increment by one day and parse to get the 
+                // number of the day.
+                monthLabel.innerHTML = `${months[showingMonth]} ${showingYear}`;
+                for (let i = shownMonthTable.rows.length - 1; i >= 0; i--) shownMonthTable.deleteRow(i);
+                let workingDate = new Date(topLeftDate);
+                for (let i = 0; i < 7; i++) {
+                    const row = shownMonthTable.insertRow(shownMonthTable.rows.length);
+                    for (let j = 0; j < 7; j++) {
+                        const cell = row.insertCell(row.cells.length);
+                        cell.id = `cell-${i}-${j}`;
+                        if (i === 0) {
+                            cell.innerHTML = daysOfWeekShortNames[j];
+                            cell.classList.add("dayHeading");
+                        } else {
+                            cellToDateMap[cell.id] = workingDate;
+                            cell.classList.add("daySquareTd");
+                            const daySquare = daySquareTemplate.content.cloneNode(true).querySelector(".daySquareTemplateContents");
+                            cell.addEventListener("click", () => {
+                                daySquare.querySelector("circle").setAttribute("fill", daySquare.querySelector("circle").getAttribute("fill") === "none" ? "#222" : "none");
+                                // TODO Commit the working date to the list of periods
+                                updatePeriodProbabilities();
+                            });
+                            cell.appendChild(daySquare);
+                            daySquare.querySelector(".dayNumber").innerHTML = `${workingDate.getDate()}`;
+                            // TODO skip setting the probability below and have this method call a 
+                            // method at the end that updates probabilities
+                            daySquare.querySelector(".periodProbability").innerHTML = `4%`;
+                            if (workingDate.getMonth() !== showingMonth) cell.classList.add("outOfFocusMonth");
+                            workingDate = new Date(workingDate.getTime() + 24 * 3600000);
+                        }
+                    }
+                }
+            }
+
+            function updatePeriodProbabilities() {
+                // TODO loop through all shown day cells and compute the probability of a period
+                // starting on each date, then save the annotation
+
+                // TODO sort the past periods
+                // TODO get mean and standard deviation from the past periods
+                // TODO 
+            }
+
+            function getProbabilityOfPeriodStartingOnDayN(N, mu, sigma, epsilon) {
+
+            }
+        </script>
+    </body>
+</html>

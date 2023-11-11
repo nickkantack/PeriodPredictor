@@ -38,6 +38,8 @@
                 left: 100%;
                 width: 3vw;
                 height: 3vw;
+                max-width: 20px;
+                max-height: 20px;
                 transform: translate(-100%, 0%);
             }
             .periodMarker svg {
@@ -135,12 +137,24 @@
                             cell.innerHTML = daysOfWeekShortNames[j];
                             cell.classList.add("dayHeading");
                         } else {
-                            cellToDateMap[cell.id] = workingDate;
+                            cellToDateMap[cell.id] = centerTimeOfThisDate(workingDate);
                             cell.classList.add("daySquareTd");
                             const daySquare = daySquareTemplate.content.cloneNode(true).querySelector(".daySquareTemplateContents");
+                            const workingDateCopy = new Date(workingDate);
                             cell.addEventListener("click", () => {
-                                daySquare.querySelector("circle").setAttribute("fill", daySquare.querySelector("circle").getAttribute("fill") === "none" ? "#222" : "none");
-                                // TODO Commit the working date to the list of periods
+                                const isNowMarkedForPeriodStart = daySquare.querySelector("circle").getAttribute("fill") === "none";
+                                if (isNowMarkedForPeriodStart) {
+                                    daySquare.querySelector("circle").setAttribute("fill", "#666");
+                                    if (!datesOfPastPeriods.includes(workingDateCopy)) {
+                                        datesOfPastPeriods.push(workingDateCopy);
+                                        datesOfPastPeriods.sort((a, b) => a.getTime() > b.getTime());
+                                    } else {
+                                    }
+                                } else {
+                                    daySquare.querySelector("circle").setAttribute("fill", "none");
+                                    if (datesOfPastPeriods.includes(workingDateCopy)) datesOfPastPeriods.splice(datesOfPastPeriods.indexOf(workingDateCopy), 1);
+                                }
+                                console.log(datesOfPastPeriods);
                                 updatePeriodProbabilities();
                             });
                             cell.appendChild(daySquare);
@@ -157,7 +171,19 @@
 
             function updatePeriodProbabilities() {
                 // TODO loop through all shown day cells and compute the probability of a period
-                // starting on each date, then save the annotation
+                    // if the date is before today, don't show the probability at all
+                if (datesOfPastPeriods.length === 0) return;
+                const dateOfLastPeriod = centerTimeOfThisDate(datesOfPastPeriods[datesOfPastPeriods.length - 1]);
+
+                console.log(`Last period started ${Math.round((centerTimeOfThisDate(new Date(Date.now())).getTime() - dateOfLastPeriod.getTime()) / (24 * 3600 * 1000))} days ago`);
+
+                for (let i = 1; i < 7; i++) {
+                    for (let j = 0; j < 7; j++) {
+                        const thisDate = cellToDateMap[`cell-${i}-${j}`];
+                        const daysSinceLastPeriod = daysFromCenteredDayAToB(dateOfLastPeriod, thisDate);
+                        console.log(`${thisDate} is ${daysSinceLastPeriod} days from last period`);
+                    }
+                }
 
                 // TODO sort the past periods
                 // TODO get mean and standard deviation from the past periods
@@ -166,6 +192,14 @@
 
             function getProbabilityOfPeriodStartingOnDayN(N, mu, sigma, epsilon) {
 
+            }
+
+            function centerTimeOfThisDate(date) {
+                return new Date(date.getTime() - 3600 * 1000 * date.getHours() - 60 * 1000 * date.getMinutes() - 1000 * date.getSeconds() + 12 * 3600 * 1000);
+            }
+
+            function daysFromCenteredDayAToB(b, a) {
+                return Math.round((centerTimeOfThisDate(a).getTime() - centerTimeOfThisDate(b).getTime()) / (24 * 3600 * 1000));
             }
         </script>
     </body>

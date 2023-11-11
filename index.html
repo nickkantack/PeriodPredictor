@@ -87,9 +87,6 @@
             const daysOfWeekShortNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-            let showingMonth = 0;
-            let showingYear = 2023;
-
             let dayIndexOfTopLeftSunday = 0;
 
             const cellToDateMap = {};
@@ -97,11 +94,9 @@
             const datesOfPastPeriods = [];
 
             const currentDate = new Date();
-            showingMonth = currentDate.getMonth();
-            const sundayDate = new Date(currentDate.getTime() - 24 * 3600000 * currentDate.getDate());
             // Find the Sunday before the first of the current month, or use the first of the current month if it is a Sunday
             // Pass in the date object of the Sunday found in the previous step to populateMonthTables
-            populateMonthTables(sundayDate);
+            populateMonthTables(currentDate.getMonth(), currentDate.getFullYear());
 
             back.addEventListener("click", () => {
                 changeMonth(false);
@@ -113,21 +108,22 @@
 
             function changeMonth(goForward) {
                 const upperLeftCornerDate = cellToDateMap["cell-1-0"];
-                const dayInTheMiddleOfPreviousMonth = new Date(upperLeftCornerDate.getTime() + (goForward ? 6 : -2) * 168 * 3600000);
-                const firstOfTheMonth = new Date(dayInTheMiddleOfPreviousMonth.getTime() - 24 * 3600000 * (dayInTheMiddleOfPreviousMonth.getDate() - 1));
-                showingMonth = firstOfTheMonth.getMonth();
-                showingYear = firstOfTheMonth.getFullYear();
-                const sundayDate = new Date(firstOfTheMonth.getTime() - 24 * 3600000 * firstOfTheMonth.getDay());
-                populateMonthTables(sundayDate);
+                const dayInMiddleOfNewMonth = new Date(upperLeftCornerDate.getTime() + (goForward ? 6 : -2) * 168 * 3600000);
+                const firstOfTheMonth = new Date(dayInMiddleOfNewMonth.getTime() - 24 * 3600000 * (dayInMiddleOfNewMonth.getDate() - 1));
+                populateMonthTables(firstOfTheMonth.getMonth(), firstOfTheMonth.getFullYear());
             }
 
-            function populateMonthTables(topLeftDate) {
+            function populateMonthTables(month, year) {
                 // The date object passed in is the Sunday before the first of this month, or possible the first of this month if it is a Sunday
                 // Create a rolling date object as you make cells below. Increment by one day and parse to get the 
                 // number of the day.
-                monthLabel.innerHTML = `${months[showingMonth]} ${showingYear}`;
+                const firstOfTheMonth = new Date(`${year}-${(month + 1)}-01T00:00:00`);
+                console.log(`${year}-${month + 1}-1T00:00:00`);
+                console.log(`${month}, ${year}, ${firstOfTheMonth}`);
+                const sundayDate = new Date(firstOfTheMonth.getTime() - 24 * 3600000 * firstOfTheMonth.getDay());
+                monthLabel.innerHTML = `${months[month]} ${year}`;
                 for (let i = shownMonthTable.rows.length - 1; i >= 0; i--) shownMonthTable.deleteRow(i);
-                let workingDate = new Date(topLeftDate);
+                let workingDate = centerTimeOfThisDate(new Date(sundayDate));
                 for (let i = 0; i < 7; i++) {
                     const row = shownMonthTable.insertRow(shownMonthTable.rows.length);
                     for (let j = 0; j < 7; j++) {
@@ -159,7 +155,7 @@
                             });
                             cell.appendChild(daySquare);
                             daySquare.querySelector(".dayNumber").innerHTML = `${workingDate.getDate()}`;
-                            if (workingDate.getMonth() !== showingMonth) cell.classList.add("outOfFocusMonth");
+                            if (workingDate.getMonth() !== month) cell.classList.add("outOfFocusMonth");
                             workingDate = new Date(workingDate.getTime() + 24 * 3600000);
                         }
                     }
@@ -199,7 +195,8 @@
                             daySquare.querySelector(".periodProbability").style.display = "block";
                             // TODO calculate the period probability
                             const probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
-                            const percentProbability = parseInt(probability * 100);
+                            console.log(`For a day ${daysSinceLastPeriod} after the period, prob is ${probability}`);
+                            const percentProbability = probability > 0.01 ? parseInt(probability * 100) : 0;
                             if (percentProbability > 0) daySquare.querySelector(".periodProbability").innerHTML = `${percentProbability}%`;
                         }
                     }
@@ -208,23 +205,23 @@
 
             function getProbabilityOfPeriodStartingOnDayN(N, mu, sigma, epsilon) {
                 const zt = Math.min(N, Math.ceil(epsilon * N / mu));
-                const zb = Math.max(1, Math.floor(N / mu / epsilon));
-                console.log(`zb: ${zb}, zt: ${zt}`);
+                return getProbabilityOfPeriodStartingOnDayNKernel(N, mu, sigma, zt, 1);
+            }
 
-                let totalProbability = 0;
-                for (let z = zb; z <= zt; z++) {
-                    for (let j = z - 1; j <= N - 1; j++) {
-                        console.log(`z: ${z}, j: ${j}, N: ${N}, totalProb: ${totalProbability}`);
-                        if (z === 1) {
-                            totalProbability += getProbabilityOfKthPeriodStartingOnDayN(N, 1, mu, sigma);
-                            break;
-                        } else {
-                            totalProbability += getProbabilityOfKthPeriodStartingOnDayN(j, z - 1, mu, sigma) * 
-                                                getProbabilityOfKthPeriodStartingOnDayN(N - j, 1, mu, sigma);
+            function getProbabilityOfPeriodStartingOnDayNKernel(N, mu, sigma, zt, prior) {
+                let probabilityContributionWithoutPrior = 0;
+                for (let z = 1; z <= zt; z++) {
+                    // z === 1 implies that the next period occurs on day N
+                    if (z === 1) { 
+                        probabilityContributionWithoutPrior += getProbabilityOfKthPeriodStartingOnDayN(N, 1, mu, sigma);
+                    } else {
+                        for (let n = 0; n < N; n++) {
+                            let newPrior = getProbabilityOfKthPeriodStartingOnDayN(n, 1, mu, sigma);
+                            probabilityContributionWithoutPrior += getProbabilityOfPeriodStartingOnDayNKernel(N - n, mu, sigma, z - 1, newPrior);
                         }
                     }
                 }
-                return totalProbability;
+                return probabilityContributionWithoutPrior * prior;
             }
 
             function getProbabilityOfKthPeriodStartingOnDayN(N, k, mu, sigma) {
@@ -232,8 +229,6 @@
                 const localStdDev = Math.sqrt(k) * sigma;
                 return 1 / Math.sqrt(2 * localStdDev) * Math.exp(-Math.pow(N - localMean, 2) / 2 / Math.pow(localStdDev, 2));
             }
-
-            console.log(getProbabilityOfPeriodStartingOnDayN(25, 30, 3, 2));
 
             function centerTimeOfThisDate(date) {
                 return new Date(date.getTime() - 3600 * 1000 * date.getHours() - 60 * 1000 * date.getMinutes() - 1000 * date.getSeconds() + 12 * 3600 * 1000);

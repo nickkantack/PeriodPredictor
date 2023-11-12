@@ -6,7 +6,8 @@ let dayIndexOfTopLeftSunday = 0;
 const cellToDateMap = {};
 let centeredDateToVisibleCellMap = {};
 
-const datesOfPastPeriods = [];
+let datesOfPastPeriods = [];
+// TODO if available, load datesOfPastPeriods from storage
 
 // TODO only when the period record changes, then recompute nextYearOfPeriodProbabilties in a 
 // way such that results become available before the entire year is computed. If a probability
@@ -59,21 +60,24 @@ function populateMonthTables(month, year) {
                 const daySquare = daySquareTemplate.content.cloneNode(true).querySelector(".daySquareTemplateContents");
                 centeredDateToVisibleCellMap[centeredDate] = daySquare;
                 const workingDateCopy = new Date(workingDate);
+                // Mark saved periods if they are visible in the calendar
+                for (let pastPeriod of datesOfPastPeriods) {
+                    if (centerTimeOfThisDate(pastPeriod).getTime() === centeredDate.getTime()) {
+                        daySquare.querySelector("circle").setAttribute("fill", "#666");
+                    }
+                }
                 cell.addEventListener("click", () => {
                     const isNowMarkedForPeriodStart = daySquare.querySelector("circle").getAttribute("fill") === "none";
                     if (isNowMarkedForPeriodStart) {
                         daySquare.querySelector("circle").setAttribute("fill", "#666");
                         if (!datesOfPastPeriods.includes(workingDateCopy)) {
                             datesOfPastPeriods.push(workingDateCopy);
-                            datesOfPastPeriods.sort((a, b) => a.getTime() > b.getTime());
-                            // TODO trigger recalculation of period probabilities for the year
-                        } else {
+                            datesOfPastPeriods.sort((a, b) => a.getTime() - b.getTime());
                         }
                     } else {
                         daySquare.querySelector("circle").setAttribute("fill", "none");
                         if (datesOfPastPeriods.includes(workingDateCopy)) {
                             datesOfPastPeriods.splice(datesOfPastPeriods.indexOf(workingDateCopy), 1);
-                            // TODO trigger recalculation of period probabilities for the year
                         }
                     }
                     updatePeriodProbabilities();

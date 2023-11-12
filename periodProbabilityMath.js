@@ -15,6 +15,7 @@ async function updatePeriodProbabilities() {
 
     // Clear out the old cache of probabilities
     nextYearOfPeriodProbabilities = new Array(366).fill(-1);
+    nextYearOfPeriodProbabilities[0] = 0; // Prevents question mark from showing on date of last period
 
     const thisUpdateId = uuidv4();
     lastestUpdateId = thisUpdateId;

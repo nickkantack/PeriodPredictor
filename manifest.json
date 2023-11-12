@@ -3,7 +3,7 @@
   "short_name": "Period Predictor",
   "description": "Forecast future periods based on historical data",
   "start_url": "/PeriodPredictor/index.html",
-  "scope": "/Predictor/",
+  "scope": "/PeriodPredictor/",
   "icons": [
     {
       "src": "./icon-512.png",

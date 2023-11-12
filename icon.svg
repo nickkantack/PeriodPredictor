@@ -1,4 +1,13 @@
 <svg id="icon" xmlns="http://www.w3.org/2000/svg" version="1.1" baseProfile="full"
     width="100" height="100" viewBox="0 0 100 100">
-    <circle cx="50" cy="50" r="40" fill="#f00"></circle>
+    <path stroke="none" fill="#000" d="M0 0H100V100H0Z"/>
+    <path stroke="none" fill="#DDF" d="M7.5 2.5H42.5 A5,5 0 0 1 47.5,7.5 V42.5A5,5 0 0 1 42.5,47.5 H7.5A5,5 0 0 1 2.5,42.5 V5A5,5 0 0 1 7.5,2.5Z"/>
+    <path stroke="none" fill="#DDF" d="M57.5 2.5H92.5 A5,5 0 0 1 97.5,7.5 V42.5A5,5 0 0 1 92.5,47.5 H57.5A5,5 0 0 1 52.5,42.5 V5A5,5 0 0 1 57.5,2.5Z"/>
+    <path stroke="none" fill="#DDF" d="M7.5 52.5H42.5 A5,5 0 0 1 47.5,57.5 V92.5A5,5 0 0 1 42.5,97.5 H7.5A5,5 0 0 1 2.5,92.5 V55A5,5 0 0 1 7.5,52.5Z"/>
+    <path stroke="none" fill="#DDF" d="M57.5 52.5H92.5 A5,5 0 0 1 97.5,57.5 V92.5A5,5 0 0 1 92.5,97.5 H57.5A5,5 0 0 1 52.5,92.5 V55A5,5 0 0 1 57.5,52.5Z"/>
+
+    <circle cx="35" cy="15" r="8" stroke="#666" stroke-width="2px" fill="#777"/>
+    <path stroke="none" fill="#48F" d="M 55 30H95V40H55Z"/>
+    <path stroke="none" fill="#8BF" d="M 55 80H95V90H55Z"/>
+    <path stroke="none" fill="#24D" d="M 5 80H45V90H5Z"/>
 </svg>

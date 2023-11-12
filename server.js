@@ -52,6 +52,7 @@ function getAndSendFile(req, res, filename){
             case 'jpg': res.writeHead(200, {'Content-Type': 'image/jpeg'}); break;
             case 'jpeg': res.writeHead(200, {'Content-Type': 'image/jpeg'}); break;
             case 'png': res.writeHead(200, {'Content-Type': 'image/png'}); break;
+            case 'svg': res.writeHead(200, {'Content-Type': 'image/svg+xml'}); break;
             // audio
             case 'wav': res.writeHead(200, {'Content-Type': 'audio/wav'}); break;
             case 'mid': res.writeHead(200, {'Content-Type': 'text/midi'}); break;

@@ -16,9 +16,10 @@
       "type": "image/png"
     },
     {
-      "src": "/icon.svg",
+      "src": "./icon.svg",
       "sizes": "100x100",
-      "type": "image/x-icon"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "theme_color": "#eeffee",

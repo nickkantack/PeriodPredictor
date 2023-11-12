@@ -68,7 +68,7 @@ function populateMonthTables(month, year) {
                 // Mark saved periods if they are visible in the calendar
                 for (let pastPeriod of datesOfPastPeriods) {
                     if (centerTimeOfThisDate(pastPeriod).getTime() === centeredDate.getTime()) {
-                        daySquare.querySelector("circle").setAttribute("fill", "#666");
+                        daySquare.querySelector("circle").setAttribute("fill", "#777");
                     }
                 }
                 cell.addEventListener("click", () => {
@@ -77,12 +77,12 @@ function populateMonthTables(month, year) {
                     for (let pastPeriod of datesOfPastPeriods) {
                         if (centerTimeOfThisDate(pastPeriod).getTime() === centeredDate.getTime()) {
                             isDateAlreadySavedAsPeriodStart = true;
-                            daySquare.querySelector("circle").setAttribute("fill", "#666");
+                            daySquare.querySelector("circle").setAttribute("fill", "#777");
                             break;
                         }
                     }
                     if (isNowMarkedForPeriodStart) {
-                        daySquare.querySelector("circle").setAttribute("fill", "#666");
+                        daySquare.querySelector("circle").setAttribute("fill", "#777");
                         if (!isDateAlreadySavedAsPeriodStart) {
                             datesOfPastPeriods.push(workingDateCopy);
                             datesOfPastPeriods.sort((a, b) => a.getTime() - b.getTime());

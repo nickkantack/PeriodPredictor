@@ -83,3 +83,12 @@
     width: 100%;
     text-align: center;
 }
+#forward {
+    float: right;
+}
+#shownMonthDiv {
+    width: 100%;
+}
+#shownMonthTable {
+    width: 100%;
+}

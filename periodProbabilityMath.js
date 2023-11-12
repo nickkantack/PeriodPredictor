@@ -43,7 +43,23 @@ async function updatePeriodProbabilities(keepOldCache) {
     const epsilon = 1.5;
     let mu = (31 + 34) / 2;
     let sigma = 1.5;
-    // TODO if there are enough periods, update mu and sigma
+    // If there are enough periods, update mu and sigma
+    if (datesOfPastPeriods.length > 4) {
+        console.log(`Custom calculation since ${datesOfPastPeriods.length}`);
+        mu = 0;
+        sigma = 0;
+        for (let i = 0; i < datesOfPastPeriods.length - 1; i++) {
+            const duration = daysFromCenteredDayAToB(datesOfPastPeriods[i], datesOfPastPeriods[i + 1]);
+            mu += duration;
+        }
+        mu /= (datesOfPastPeriods.length - 1);
+        for (let i = 0; i < datesOfPastPeriods.length - 1; i++) {
+            const duration = daysFromCenteredDayAToB(datesOfPastPeriods[i], datesOfPastPeriods[i + 1]);
+            sigma += Math.pow(duration - mu, 2);
+        }
+        sigma /= (datesOfPastPeriods.length - 2);
+        sigma = Math.sqrt(sigma);
+    }
 
     // TODO first, perform the calculation for all shown days (do non-shown days later)
     let minDaysSinceLastPeriodShown = null;
@@ -95,6 +111,7 @@ async function updatePeriodProbabilities(keepOldCache) {
 }
 
 function applyProbabilityToDaySquare(daySquare, probability) {
+    if (!probability) return;
     const periodProbabilityDiv = daySquare.querySelector(".periodProbability");
     periodProbabilityDiv.classList.remove("likely");
     periodProbabilityDiv.classList.remove("somewhatLikely");

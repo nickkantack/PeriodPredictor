@@ -71,6 +71,7 @@
     border-radius: 6px;
 }
 #debug {
+    display: none;
     position: fixed;
     left: 0;
     top: 0;

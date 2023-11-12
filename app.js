@@ -73,16 +73,35 @@ function populateMonthTables(month, year) {
                 }
                 cell.addEventListener("click", () => {
                     const isNowMarkedForPeriodStart = daySquare.querySelector("circle").getAttribute("fill") === "none";
+                    let isDateAlreadySavedAsPeriodStart = false;
+                    for (let pastPeriod of datesOfPastPeriods) {
+                        if (centerTimeOfThisDate(pastPeriod).getTime() === centeredDate.getTime()) {
+                            isDateAlreadySavedAsPeriodStart = true;
+                            daySquare.querySelector("circle").setAttribute("fill", "#666");
+                            break;
+                        }
+                    }
                     if (isNowMarkedForPeriodStart) {
                         daySquare.querySelector("circle").setAttribute("fill", "#666");
-                        if (!datesOfPastPeriods.includes(workingDateCopy)) {
+                        if (!isDateAlreadySavedAsPeriodStart) {
                             datesOfPastPeriods.push(workingDateCopy);
                             datesOfPastPeriods.sort((a, b) => a.getTime() - b.getTime());
                         }
                     } else {
+                        // Remove this day from the list of recorded periods
                         daySquare.querySelector("circle").setAttribute("fill", "none");
-                        if (datesOfPastPeriods.includes(workingDateCopy)) {
-                            datesOfPastPeriods.splice(datesOfPastPeriods.indexOf(workingDateCopy), 1);
+                        for (let s = datesOfPastPeriods.length - 1; s >= 0; s--) {
+                            if (centerTimeOfThisDate(datesOfPastPeriods[s]).getTime() === centeredDate.getTime()) {
+                                datesOfPastPeriods.splice(s, 1);
+                            }
+                        }
+                        // Remove ANY duplicates
+                        for (let s = datesOfPastPeriods.length - 2; s >= 0; s--) {
+                            for (let t = datesOfPastPeriods.length - 1; t > s; t--) {
+                                if (centerTimeOfThisDate(datesOfPastPeriods[s]).getTime() === centerTimeOfThisDate(datesOfPastPeriods[t]).getTime()) {
+                                    datesOfPastPeriods.splice(t, 1);
+                                }
+                            }
                         }
                     }
                     // save the past periods

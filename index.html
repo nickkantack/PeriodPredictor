@@ -16,20 +16,25 @@
             }
             .daySquareTd {
                 width: 13vw;
-                height: 6vh;
+                height: 10vh;
                 font-size: 3vh;
-                background: #DDD;
+                background: #DDF;
                 box-sizing: border-box;
+                vertical-align: top;
+                padding-top: 10px;
             }
             .daySquareTemplateContents {
                 position: relative;
-                margin: 0;
-                width: 13vw;
+                margin-left: 3px;
+                margin-right: 3px;
                 height: 5vh;
                 box-sizing: border-box;
             }
+            .inFocusMonth {
+                color: #127;
+            }
             .outOfFocusMonth {
-                color: #666;
+                color: #99C;
             }
             .periodMarker {
                 display: block;
@@ -46,12 +51,29 @@
                 width: 100%;
                 height: 100%;
             }
+            .veryLikely {
+                background: #00A;
+                color: #FFF;
+            }
+            .likely {
+                background: #24D;
+                color: #FFF;
+            }
+            .somewhatLikely {
+                background: #48F;
+                color: #127;
+            }
+            .unlikely {
+                background: #8BF;
+                color: #127;
+            }
             .periodProbability {
                 display: none;
                 position: relative;
                 width: 100%;
                 text-align: center;
                 font-size: 2vh;
+                border-radius: 6px;
             }
             #monthLabel {
                 width: 100%;
@@ -92,6 +114,14 @@
             const cellToDateMap = {};
 
             const datesOfPastPeriods = [];
+
+            const nextYearOfPeriodProbabilities = {};
+
+            // TODO only when the period record changes, then recompute nextYearOfPeriodProbabilties in a 
+            // way such that results become available before the entire year is computed. If a probability
+            // is computed for a date that is visible, then update the displayed probability. This way,
+            // scrolling to different months should trigger no probability calculations, only changes to the 
+            // record of periods.
 
             const currentDate = new Date();
             // Find the Sunday before the first of the current month, or use the first of the current month if it is a Sunday
@@ -145,22 +175,36 @@
                                     if (!datesOfPastPeriods.includes(workingDateCopy)) {
                                         datesOfPastPeriods.push(workingDateCopy);
                                         datesOfPastPeriods.sort((a, b) => a.getTime() > b.getTime());
+                                        // TODO trigger recalculation of period probabilities for the year
                                     } else {
                                     }
                                 } else {
                                     daySquare.querySelector("circle").setAttribute("fill", "none");
-                                    if (datesOfPastPeriods.includes(workingDateCopy)) datesOfPastPeriods.splice(datesOfPastPeriods.indexOf(workingDateCopy), 1);
+                                    if (datesOfPastPeriods.includes(workingDateCopy)) {
+                                        datesOfPastPeriods.splice(datesOfPastPeriods.indexOf(workingDateCopy), 1);
+                                        // TODO trigger recalculation of period probabilities for the year
+                                    }
                                 }
                                 console.log(datesOfPastPeriods);
                                 updatePeriodProbabilities();
                             });
                             cell.appendChild(daySquare);
                             daySquare.querySelector(".dayNumber").innerHTML = `${workingDate.getDate()}`;
-                            if (workingDate.getMonth() !== month) cell.classList.add("outOfFocusMonth");
+                            if (workingDate.getMonth() !== month) {
+                                cell.classList.add("outOfFocusMonth");
+                                cell.classList.remove("inOfFocusMonth");
+                            }
                             workingDate = new Date(workingDate.getTime() + 24 * 3600000);
                         }
                     }
                 }
+            }
+
+            function recalculatePeriodProbabilitiesForTheYear() {
+                // If there is an ongoing calculation, stop it
+                // Start animation to indicate calculation is underway
+                // Trigger asynchronously the new probabilities (consider starting with ones for visible days)
+                // End the animation indicating calculation
             }
 
             function updatePeriodProbabilities() {
@@ -180,8 +224,8 @@
                 console.log(`Last period started ${Math.round((centerTimeOfThisDate(new Date(Date.now())).getTime() - dateOfLastPeriod.getTime()) / (24 * 3600 * 1000))} days ago`);
                 
                 const epsilon = 2;
-                let mu = 28;
-                let sigma = 3;
+                let mu = (31 + 34) / 2;
+                let sigma = 1.5;
                 // TODO if there are enough periods, update mu and sigma
 
                 for (let i = 1; i < 7; i++) {
@@ -195,9 +239,24 @@
                         } else {
                             daySquare.querySelector(".periodProbability").style.display = "block";
                             let probability = 0;
-                            if (daysSinceLastPeriod < 5 * mu) probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
+                            if (daysSinceLastPeriod < 8 * mu) probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
                             const percentProbability = probability > 0.01 ? parseInt(probability * 100) : 0;
-                            if (percentProbability > 0) daySquare.querySelector(".periodProbability").innerHTML = `${percentProbability}%`;
+                            const periodProbabilityDiv = daySquare.querySelector(".periodProbability");
+                            periodProbabilityDiv.classList.remove("likely");
+                            periodProbabilityDiv.classList.remove("somewhatLikely");
+                            periodProbabilityDiv.classList.remove("unlikely");
+                            if (percentProbability > 0) {
+                                periodProbabilityDiv.innerHTML = `${percentProbability}%`;
+                                if (percentProbability > 10) {
+                                    periodProbabilityDiv.classList.add("veryLikely");
+                                } else if (percentProbability > 7) {
+                                    periodProbabilityDiv.classList.add("likely");
+                                } else if (percentProbability > 4) {
+                                    periodProbabilityDiv.classList.add("somewhatLikely");
+                                } else {
+                                    periodProbabilityDiv.classList.add("unlikely");
+                                }
+                            }
                         }
                     }
                 }

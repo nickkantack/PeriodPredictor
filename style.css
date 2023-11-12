@@ -1,0 +1,76 @@
+.fullWidthDiv {
+    width: 100%;
+    box-sizing: border-box;
+}
+.dayHeading {
+    text-align: center;
+    background: #888;
+}
+.dayNumber {
+    display: block;
+}
+.daySquareTd {
+    width: 13vw;
+    height: 10vh;
+    font-size: 3vh;
+    background: #DDF;
+    box-sizing: border-box;
+    vertical-align: top;
+    padding-top: 10px;
+}
+.daySquareTemplateContents {
+    position: relative;
+    margin-left: 3px;
+    margin-right: 3px;
+    height: 5vh;
+    box-sizing: border-box;
+}
+.inFocusMonth {
+    color: #127;
+}
+.outOfFocusMonth {
+    color: #99C;
+}
+.periodMarker {
+    display: block;
+    position: absolute;
+    top: 0%;
+    left: 100%;
+    width: 3vw;
+    height: 3vw;
+    max-width: 20px;
+    max-height: 20px;
+    transform: translate(-100%, 0%);
+}
+.periodMarker svg {
+    width: 100%;
+    height: 100%;
+}
+.veryLikely {
+    background: #00A;
+    color: #FFF;
+}
+.likely {
+    background: #24D;
+    color: #FFF;
+}
+.somewhatLikely {
+    background: #48F;
+    color: #127;
+}
+.unlikely {
+    background: #8BF;
+    color: #127;
+}
+.periodProbability {
+    display: none;
+    position: relative;
+    width: 100%;
+    text-align: center;
+    font-size: 2vh;
+    border-radius: 6px;
+}
+#monthLabel {
+    width: 100%;
+    text-align: center;
+}

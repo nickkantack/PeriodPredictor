@@ -59,7 +59,33 @@ async function updatePeriodProbabilities(keepOldCache) {
         }
         sigma /= (datesOfPastPeriods.length - 2);
         sigma = Math.sqrt(sigma);
+        if (sigma === 0) sigma = 1;
+
+        // Check for outliers. Remove them and try again.
+        const nonOutliers = [];
+        for (let datum of datesOfPastPeriods) {
+            if (Math.abs(datum - mu) / sigma < 2.5) nonOutliers.push(datum);
+        }
+        if (nonOutliers.length > 4) {
+            mu = 0;
+            sigma = 0;
+            for (let i = 0; i < nonOutliers.length - 1; i++) {
+                const duration = daysFromCenteredDayAToB(nonOutliers[i], nonOutliers[i + 1]);
+                mu += duration;
+            }
+            mu /= (datesOfPastPeriods.length - 1);
+            for (let i = 0; i < nonOutliers.length - 1; i++) {
+                const duration = daysFromCenteredDayAToB(nonOutliers[i], nonOutliers[i + 1]);
+                sigma += Math.pow(duration - mu, 2);
+            }
+            sigma /= (nonOutliers.length - 2);
+            sigma = Math.sqrt(sigma);
+            if (sigma === 0) sigma = 1;
+        }
     }
+
+    // Final check, if we don't like the stats we calculated, resort to defaults
+    if (sigma > 5) sigma = 5;
 
     // TODO first, perform the calculation for all shown days (do non-shown days later)
     let minDaysSinceLastPeriodShown = null;
@@ -116,9 +142,11 @@ function applyProbabilityToDaySquare(daySquare, probability) {
     periodProbabilityDiv.classList.remove("likely");
     periodProbabilityDiv.classList.remove("somewhatLikely");
     periodProbabilityDiv.classList.remove("unlikely");
+    periodProbabilityDiv.classList.remove("unknown");
     if (probability < 0) {
         periodProbabilityDiv.style.display = "block";
         periodProbabilityDiv.innerHTML = "?";
+        periodProbabilityDiv.classList.add("unknown");
         return;
     }
     if (probability < 0.01) {

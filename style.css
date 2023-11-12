@@ -62,6 +62,9 @@
     background: #8BF;
     color: #127;
 }
+.unknown {
+    background: #FDFDFF;
+}
 .periodProbability {
     display: none;
     position: relative;

@@ -1,5 +1,5 @@
 // The version of the cache.
-const VERSION = "v3";
+const VERSION = "v4";
 
 // The name of the cache
 const CACHE_NAME = `period-predictor-${VERSION}`;
@@ -11,6 +11,7 @@ const APP_STATIC_RESOURCES = [
   "/PeriodPredictor/app.js",
   "/PeriodPredictor/periodProbabilityMath.js",
   "/PeriodPredictor/icon.svg",
+  "/PeriodPredictor/icon.png",
   "/PeriodPredictor/isLocal.txt",
   "/PeriodPredictor/style.css",
 ];

@@ -15,8 +15,22 @@
         -->
         <div id="debug"></div>
         <div id="controlsDiv" class="fullWidthDiv">
-            <button id="back">back</button>
-            <button id="forward">forward</button>
+            <button id="back" class="svgButton">
+                <svg class="buttonSvg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="#57F"></circle>
+                    <path stroke="#fff" fill="none" stroke-width="9" d="M20 50 H80"/>
+                    <path stroke="#fff" fill="none" stroke-width="9" d="M23 50 L50 20"/>
+                    <path stroke="#fff" fill="none" stroke-width="9" d="M23 50 L50 80"/>
+                </svg>
+            </button>
+            <button id="forward" class="svgButton">
+                <svg class="buttonSvg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="#57F"></circle>
+                    <path stroke="#fff" fill="none" stroke-width="9" d="M20 50 H80"/>
+                    <path stroke="#fff" fill="none" stroke-width="9" d="M77 50 L50 20"/>
+                    <path stroke="#fff" fill="none" stroke-width="9" d="M77 50 L50 80"/>
+                </svg>
+            </button>
         </div>
         <div id="monthLabel"></div>
         <div id="calendarDiv" class="fullWidthDiv">

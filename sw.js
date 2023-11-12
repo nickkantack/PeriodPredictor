@@ -1,5 +1,5 @@
 // The version of the cache.
-const VERSION = "v2";
+const VERSION = "v3";
 
 // The name of the cache
 const CACHE_NAME = `period-predictor-${VERSION}`;

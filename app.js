@@ -116,7 +116,10 @@ function populateMonthTables(month, year) {
                 daySquare.querySelector(".dayNumber").innerHTML = `${workingDate.getDate()}`;
                 if (workingDate.getMonth() !== month) {
                     cell.classList.add("outOfFocusMonth");
-                    cell.classList.remove("inOfFocusMonth");
+                    cell.classList.remove("inFocusMonth");
+                } else {
+                    cell.classList.add("inFocusMonth");
+                    cell.classList.remove("outOfFocusMonth");
                 }
                 // If there is a cached probability for this square, annotate it
                 if (datesOfPastPeriods.length > 0) {

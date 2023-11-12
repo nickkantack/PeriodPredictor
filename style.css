@@ -2,9 +2,18 @@
     width: 100%;
     box-sizing: border-box;
 }
+.buttonSvg {
+    width: 10vw;
+    height: 10vw;
+}
+.svgButton {
+    background: none;
+    border: none;
+}
 .dayHeading {
     text-align: center;
-    background: #888;
+    background: #57F;
+    color: #fff;
 }
 .dayNumber {
     display: block;
@@ -81,6 +90,7 @@
 }
 #monthLabel {
     width: 100%;
+    font-size: 5vw;
     text-align: center;
 }
 #forward {

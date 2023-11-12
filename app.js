@@ -4,6 +4,7 @@ const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 let dayIndexOfTopLeftSunday = 0;
 
 const cellToDateMap = {};
+let centeredDateToVisibleCellMap = {};
 
 const datesOfPastPeriods = [];
 
@@ -31,15 +32,13 @@ function changeMonth(goForward) {
     const dayInMiddleOfNewMonth = new Date(upperLeftCornerDate.getTime() + (goForward ? 6 : -2) * 168 * 3600000);
     const firstOfTheMonth = new Date(dayInMiddleOfNewMonth.getTime() - 24 * 3600000 * (dayInMiddleOfNewMonth.getDate() - 1));
     populateMonthTables(firstOfTheMonth.getMonth(), firstOfTheMonth.getFullYear());
-    // TODO don't call updatePeriodProbabilities here. Assume that the cache is up to date and pull
-    // from the cache.
-    updatePeriodProbabilities();
 }
 
 function populateMonthTables(month, year) {
     // The date object passed in is the Sunday before the first of this month, or possible the first of this month if it is a Sunday
     // Create a rolling date object as you make cells below. Increment by one day and parse to get the 
     // number of the day.
+    centeredDateToVisibleCellMap = {};
     const firstOfTheMonth = new Date(`${year}-${(month + 1) < 10 ? "0" : ""}${(month + 1)}-01T00:00:00`);
     const sundayDate = new Date(firstOfTheMonth.getTime() - 24 * 3600000 * firstOfTheMonth.getDay());
     monthLabel.innerHTML = `${months[month]} ${year}`;
@@ -54,9 +53,11 @@ function populateMonthTables(month, year) {
                 cell.innerHTML = daysOfWeekShortNames[j];
                 cell.classList.add("dayHeading");
             } else {
-                cellToDateMap[cell.id] = centerTimeOfThisDate(workingDate);
+                const centeredDate = centerTimeOfThisDate(workingDate);
+                cellToDateMap[cell.id] = centeredDate;
                 cell.classList.add("daySquareTd");
                 const daySquare = daySquareTemplate.content.cloneNode(true).querySelector(".daySquareTemplateContents");
+                centeredDateToVisibleCellMap[centeredDate] = daySquare;
                 const workingDateCopy = new Date(workingDate);
                 cell.addEventListener("click", () => {
                     const isNowMarkedForPeriodStart = daySquare.querySelector("circle").getAttribute("fill") === "none";
@@ -75,7 +76,6 @@ function populateMonthTables(month, year) {
                             // TODO trigger recalculation of period probabilities for the year
                         }
                     }
-                    console.log(datesOfPastPeriods);
                     updatePeriodProbabilities();
                 });
                 cell.appendChild(daySquare);
@@ -84,6 +84,14 @@ function populateMonthTables(month, year) {
                     cell.classList.add("outOfFocusMonth");
                     cell.classList.remove("inOfFocusMonth");
                 }
+                // If there is a cached probability for this square, annotate it
+                if (datesOfPastPeriods.length > 0) {
+                    const daysSinceLastPeriod = daysFromCenteredDayAToB(centerTimeOfThisDate(datesOfPastPeriods[datesOfPastPeriods.length - 1]), centeredDate);
+                    if (nextYearOfPeriodProbabilities.length > daysSinceLastPeriod) {
+                        applyProbabilityToDaySquare(daySquare, nextYearOfPeriodProbabilities[daysSinceLastPeriod]);
+                    }
+                }
+                // Update the date cursor
                 workingDate = new Date(workingDate.getTime() + 24 * 3600000);
             }
         }

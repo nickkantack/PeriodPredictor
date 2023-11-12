@@ -9,6 +9,7 @@ const APP_STATIC_RESOURCES = [
   "/PeriodPredictor/manifest.json",
   "/PeriodPredictor/index.html",
   "/PeriodPredictor/app.js",
+  "/PeriodPredictor/icon.svg",
   "/PeriodPredictor/icon-192.png",
   "/PeriodPredictor/icon-512.png",
   "/PeriodPredictor/isLocal.txt",

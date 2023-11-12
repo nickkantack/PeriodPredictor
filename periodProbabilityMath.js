@@ -1,11 +1,17 @@
 
+const PERIOD_PROBABILITIES_STORAGE_KEY = `period-predictor-period-probabilities`;
 let nextYearOfPeriodProbabilities = [];
+// load from local storage
+if (window.localStorage.getItem(PERIOD_PROBABILITIES_STORAGE_KEY)) {
+    nextYearOfPeriodProbabilities = JSON.parse(window.localStorage.getItem(PERIOD_PROBABILITIES_STORAGE_KEY));
+}
+
 let probabilityCalculationProgressInterval = null;
 let lastestUpdateId = null;
 let millisOfLastBreak = 0;
 const MAX_MILLIS_BEFORE_BREAK = 30;
 
-async function updatePeriodProbabilities() {
+async function updatePeriodProbabilities(keepOldCache) {
     // If there is an ongoing calculation, stop it
     // Start animation to indicate calculation is underway
     // Trigger asynchronously the new probabilities (consider starting with ones for visible days)
@@ -14,8 +20,11 @@ async function updatePeriodProbabilities() {
     debug.innerHTML = "0%";
 
     // Clear out the old cache of probabilities
-    nextYearOfPeriodProbabilities = new Array(366).fill(-1);
-    nextYearOfPeriodProbabilities[0] = 0; // Prevents question mark from showing on date of last period
+    if (!keepOldCache) {
+        nextYearOfPeriodProbabilities = new Array(366).fill(-1);
+        nextYearOfPeriodProbabilities[0] = 0; // Prevents question mark from showing on date of last period
+        window.localStorage.setItem(PERIOD_PROBABILITIES_STORAGE_KEY, JSON.stringify(nextYearOfPeriodProbabilities));
+    }
 
     const thisUpdateId = uuidv4();
     lastestUpdateId = thisUpdateId;
@@ -51,9 +60,13 @@ async function updatePeriodProbabilities() {
                 continue;
             } else {
                 let probability = 0;
-                if (daysSinceLastPeriod < 365) probability = await getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon, thisUpdateId);
+                if (keepOldCache && nextYearOfPeriodProbabilities.length > 1 + daysSinceLastPeriod) {
+                    probability = nextYearOfPeriodProbabilities[dateOfLastPeriod];
+                } else {
+                    if (daysSinceLastPeriod < 365) probability = await getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon, thisUpdateId);
+                    nextYearOfPeriodProbabilities[daysSinceLastPeriod] = Math.abs(probability) > 0.001 ? probability : 0;
+                }
                 applyProbabilityToDaySquare(daySquare, probability);
-                nextYearOfPeriodProbabilities[daysSinceLastPeriod] = probability;
             }
         }
     }
@@ -62,9 +75,14 @@ async function updatePeriodProbabilities() {
     for (let n = 1; n <= 365; n++) {
         // If n days after the last period is currently visible in the month view, skip calculating 
         if (n >= minDaysSinceLastPeriodShown && n <= maxDaysSinceLastPeriodShown) continue;
-        const probability = await getProbabilityOfPeriodStartingOnDayN(n, mu, sigma, epsilon, thisUpdateId);
+        let probability = 0;
+        if (keepOldCache && nextYearOfPeriodProbabilities.length > n + 1 && nextYearOfPeriodProbabilities[n] > -1) {
+            probability = nextYearOfPeriodProbabilities[n];
+        } else {
+            probability = await getProbabilityOfPeriodStartingOnDayN(n, mu, sigma, epsilon, thisUpdateId);
+        }
         if (thisUpdateId !== lastestUpdateId) return;
-        nextYearOfPeriodProbabilities[n] = probability;
+        nextYearOfPeriodProbabilities[n] = Math.abs(probability) > 0.001 ? probability : 0;
         // TODO Things might have changed in the UI and this square might be visible now. If so, annotated with
         // the probability
         const currentDate = centerTimeOfThisDate(new Date(dateOfLastPeriod.getTime() + n * 24 * 3600 * 1000));
@@ -72,6 +90,7 @@ async function updatePeriodProbabilities() {
             applyProbabilityToDaySquare(centeredDateToVisibleCellMap[currentDate], probability);
             }
         debug.innerHTML = `${100 * n / 365}%`;
+        window.localStorage.setItem(PERIOD_PROBABILITIES_STORAGE_KEY, JSON.stringify(nextYearOfPeriodProbabilities));
     }
 }
 

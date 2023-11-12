@@ -6,19 +6,24 @@ let dayIndexOfTopLeftSunday = 0;
 const cellToDateMap = {};
 let centeredDateToVisibleCellMap = {};
 
+const DATES_OF_PAST_PERIODS_STORAGE_KEY = `period-predictor-datesOfPastPeriods`; 
 let datesOfPastPeriods = [];
-// TODO if available, load datesOfPastPeriods from storage
-
-// TODO only when the period record changes, then recompute nextYearOfPeriodProbabilties in a 
-// way such that results become available before the entire year is computed. If a probability
-// is computed for a date that is visible, then update the displayed probability. This way,
-// scrolling to different months should trigger no probability calculations, only changes to the 
-// record of periods.
+// If available, load datesOfPastPeriods from storage
+if (window.localStorage.getItem(DATES_OF_PAST_PERIODS_STORAGE_KEY)) {
+    const milliseconds = JSON.parse(window.localStorage.getItem(DATES_OF_PAST_PERIODS_STORAGE_KEY));
+    milliseconds.sort();
+    for (let timestamp of milliseconds) {
+        datesOfPastPeriods.push(new Date(timestamp));
+    }
+}
 
 const currentDate = new Date();
 // Find the Sunday before the first of the current month, or use the first of the current month if it is a Sunday
 // Pass in the date object of the Sunday found in the previous step to populateMonthTables
 populateMonthTables(currentDate.getMonth(), currentDate.getFullYear());
+
+// Trigger an update of probabilities that pulls from the cache and continues calculating further if needed
+updatePeriodProbabilities(true);
 
 back.addEventListener("click", () => {
     changeMonth(false);
@@ -80,6 +85,12 @@ function populateMonthTables(month, year) {
                             datesOfPastPeriods.splice(datesOfPastPeriods.indexOf(workingDateCopy), 1);
                         }
                     }
+                    // save the past periods
+                    const newMillis = [];
+                    for (let date of datesOfPastPeriods) {
+                        newMillis.push(date.getTime());
+                    }
+                    window.localStorage.setItem(DATES_OF_PAST_PERIODS_STORAGE_KEY, JSON.stringify(newMillis));
                     updatePeriodProbabilities();
                 });
                 cell.appendChild(daySquare);

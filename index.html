@@ -194,10 +194,8 @@
                             continue;
                         } else {
                             daySquare.querySelector(".periodProbability").style.display = "block";
-                            // TODO calculate the period probability
-                            isVerbose = daysSinceLastPeriod === 58;
-                            const probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
-                            // console.log(`For ${thisDate}, a day ${daysSinceLastPeriod} after the period, prob is ${probability}`);
+                            let probability = 0;
+                            if (daysSinceLastPeriod < 5 * mu) probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
                             const percentProbability = probability > 0.01 ? parseInt(probability * 100) : 0;
                             if (percentProbability > 0) daySquare.querySelector(".periodProbability").innerHTML = `${percentProbability}%`;
                         }
@@ -205,16 +203,11 @@
                 }
             }
 
-            let isVerbose = false;
-
             function getProbabilityOfPeriodStartingOnDayN(N, mu, sigma, epsilon) {
-                // const zt = Math.ceil(1.5 * N / mu);
-                const zt = 2;
-                if (isVerbose) console.log(`The original zt is ${zt}`);
+                const zt = Math.ceil(1.5 * N / mu);
                 let totalProbability = 0;
                 for (let z = 1; z <= zt; z++) {
                     const contribution = getProbabilityOfPeriodStartingOnDayNKernel(N, mu, sigma, z, 1);
-                    if (isVerbose) console.log(`The contribution for z = ${z} is ${contribution}`);
                     totalProbability += contribution;
                 }
                 return totalProbability;
@@ -228,9 +221,8 @@
                 } else {
                     for (let n = 1; n < N - z + 1; n++) {
                         let newPrior = getProbabilityOfKthPeriodStartingOnDayN(n, 1, mu, sigma);
-                        if (isVerbose && newPrior > 0.01) console.log(`Decent prior of ${newPrior}, old prior is ${prior}, z is ${z}, n is ${n}, N is ${N}`);
+                        if (newPrior < 0.01) continue; // Helps avoid delays on log future predictions
                         const contribution = getProbabilityOfPeriodStartingOnDayNKernel(N - n, mu, sigma, z - 1, newPrior);
-                        if (isVerbose && newPrior > 0.01) console.log(`My new contribution is ${contribution}`);
                         probabilityContributionWithoutPrior += contribution;
                     }
                 }

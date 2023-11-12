@@ -41,8 +41,6 @@ function populateMonthTables(month, year) {
     // Create a rolling date object as you make cells below. Increment by one day and parse to get the 
     // number of the day.
     const firstOfTheMonth = new Date(`${year}-${(month + 1) < 10 ? "0" : ""}${(month + 1)}-01T00:00:00`);
-    console.log(`${year}-${(month + 1) < 10 ? "0" : ""}${month + 1}-01T00:00:00`);
-    console.log(`${month}, ${year}, ${firstOfTheMonth}`);
     const sundayDate = new Date(firstOfTheMonth.getTime() - 24 * 3600000 * firstOfTheMonth.getDay());
     monthLabel.innerHTML = `${months[month]} ${year}`;
     for (let i = shownMonthTable.rows.length - 1; i >= 0; i--) shownMonthTable.deleteRow(i);

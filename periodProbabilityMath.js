@@ -43,7 +43,7 @@ async function updatePeriodProbabilities() {
                 continue;
             } else {
                 let probability = 0;
-                if (daysSinceLastPeriod < 365) probability = await getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon, lastestUpdateId);
+                if (daysSinceLastPeriod < 365) probability = await getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon, thisUpdateId);
                 applyProbabilityToDaySquare(daySquare, probability);
             }
             debug.innerHTML = `${100 * (i * 6 + j) / 42}%`;

@@ -7,8 +7,6 @@ const cellToDateMap = {};
 
 const datesOfPastPeriods = [];
 
-const nextYearOfPeriodProbabilities = {};
-
 // TODO only when the period record changes, then recompute nextYearOfPeriodProbabilties in a 
 // way such that results become available before the entire year is computed. If a probability
 // is computed for a date that is visible, then update the displayed probability. This way,
@@ -33,6 +31,8 @@ function changeMonth(goForward) {
     const dayInMiddleOfNewMonth = new Date(upperLeftCornerDate.getTime() + (goForward ? 6 : -2) * 168 * 3600000);
     const firstOfTheMonth = new Date(dayInMiddleOfNewMonth.getTime() - 24 * 3600000 * (dayInMiddleOfNewMonth.getDate() - 1));
     populateMonthTables(firstOfTheMonth.getMonth(), firstOfTheMonth.getFullYear());
+    // TODO don't call updatePeriodProbabilities here. Assume that the cache is up to date and pull
+    // from the cache.
     updatePeriodProbabilities();
 }
 
@@ -92,104 +92,17 @@ function populateMonthTables(month, year) {
     }
 }
 
-function recalculatePeriodProbabilitiesForTheYear() {
-    // If there is an ongoing calculation, stop it
-    // Start animation to indicate calculation is underway
-    // Trigger asynchronously the new probabilities (consider starting with ones for visible days)
-    // End the animation indicating calculation
-}
-
-function updatePeriodProbabilities() {
-    // TODO loop through all shown day cells and compute the probability of a period
-        // if the date is before today, don't show the probability at all
-    if (datesOfPastPeriods.length === 0) {
-        for (let i = 1; i < 7; i++) {
-            for (let j = 0; j < 7; j++) {
-                document.getElementById(`cell-${i}-${j}`).querySelector(".periodProbability").style.display = "none";
-            }
-        }
-        return;
-    }
-    
-    const dateOfLastPeriod = centerTimeOfThisDate(datesOfPastPeriods[datesOfPastPeriods.length - 1]);
-
-    console.log(`Last period started ${Math.round((centerTimeOfThisDate(new Date(Date.now())).getTime() - dateOfLastPeriod.getTime()) / (24 * 3600 * 1000))} days ago`);
-    
-    const epsilon = 2;
-    let mu = (31 + 34) / 2;
-    let sigma = 1.5;
-    // TODO if there are enough periods, update mu and sigma
-
-    for (let i = 1; i < 7; i++) {
-        for (let j = 0; j < 7; j++) {
-            const thisDate = cellToDateMap[`cell-${i}-${j}`];
-            const daySquare = document.getElementById(`cell-${i}-${j}`);
-            const daysSinceLastPeriod = daysFromCenteredDayAToB(dateOfLastPeriod, thisDate);
-            if (daysSinceLastPeriod < 0) {
-                daySquare.querySelector(".periodProbability").style.display = "none";
-                continue;
-            } else {
-                daySquare.querySelector(".periodProbability").style.display = "block";
-                let probability = 0;
-                if (daysSinceLastPeriod < 8 * mu) probability = getProbabilityOfPeriodStartingOnDayN(daysSinceLastPeriod, mu, sigma, epsilon);
-                const percentProbability = probability > 0.01 ? parseInt(probability * 100) : 0;
-                const periodProbabilityDiv = daySquare.querySelector(".periodProbability");
-                periodProbabilityDiv.classList.remove("likely");
-                periodProbabilityDiv.classList.remove("somewhatLikely");
-                periodProbabilityDiv.classList.remove("unlikely");
-                if (percentProbability > 0) {
-                    periodProbabilityDiv.innerHTML = `${percentProbability}%`;
-                    if (percentProbability > 10) {
-                        periodProbabilityDiv.classList.add("veryLikely");
-                    } else if (percentProbability > 7) {
-                        periodProbabilityDiv.classList.add("likely");
-                    } else if (percentProbability > 4) {
-                        periodProbabilityDiv.classList.add("somewhatLikely");
-                    } else {
-                        periodProbabilityDiv.classList.add("unlikely");
-                    }
-                }
-            }
-        }
-    }
-}
-
-function getProbabilityOfPeriodStartingOnDayN(N, mu, sigma, epsilon) {
-    const zt = Math.ceil(1.5 * N / mu);
-    let totalProbability = 0;
-    for (let z = 1; z <= zt; z++) {
-        const contribution = getProbabilityOfPeriodStartingOnDayNKernel(N, mu, sigma, z, 1);
-        totalProbability += contribution;
-    }
-    return totalProbability;
-}
-
-function getProbabilityOfPeriodStartingOnDayNKernel(N, mu, sigma, z, prior) {
-    let probabilityContributionWithoutPrior = 0;
-    // z === 1 implies that the next period occurs on day N
-    if (z === 1) { 
-        probabilityContributionWithoutPrior += getProbabilityOfKthPeriodStartingOnDayN(N, 1, mu, sigma);
-    } else {
-        for (let n = 1; n < N - z + 1; n++) {
-            let newPrior = getProbabilityOfKthPeriodStartingOnDayN(n, 1, mu, sigma);
-            if (newPrior < 0.01) continue; // Helps avoid delays on log future predictions
-            const contribution = getProbabilityOfPeriodStartingOnDayNKernel(N - n, mu, sigma, z - 1, newPrior);
-            probabilityContributionWithoutPrior += contribution;
-        }
-    }
-    return probabilityContributionWithoutPrior * prior;
-}
-
-function getProbabilityOfKthPeriodStartingOnDayN(N, k, mu, sigma) {
-    const localMean = k * mu;
-    const localStdDev = Math.sqrt(k) * sigma;
-    return 1 / Math.sqrt(2 * Math.PI) / localStdDev * Math.exp(-Math.pow(N - localMean, 2) / 2 / Math.pow(localStdDev, 2));
-}
-
 function centerTimeOfThisDate(date) {
     return new Date(date.getTime() - 3600 * 1000 * date.getHours() - 60 * 1000 * date.getMinutes() - 1000 * date.getSeconds() + 12 * 3600 * 1000);
 }
 
 function daysFromCenteredDayAToB(b, a) {
     return Math.round((centerTimeOfThisDate(a).getTime() - centerTimeOfThisDate(b).getTime()) / (24 * 3600 * 1000));
+}
+
+// https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+function uuidv4() {
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
 }
